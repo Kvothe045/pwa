@@ -5,9 +5,8 @@ const withPWAConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  dynamicStartUrl: false, // This ensures root URL is cached
   fallbacks: {
-    document: '/_offline', // Fallback page for offline navigation
+    document: '/~offline', // App Router fallback path
   },
   runtimeCaching: [
     {
@@ -22,13 +21,36 @@ const withPWAConfig = withPWA({
       },
     },
     {
-      urlPattern: /^https?.*\.(js|css|woff|woff2|ttf|eot)$/,
+      urlPattern: ({ request }) => request.destination === 'document',
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages',
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/static.+\.js$/i,
       handler: 'CacheFirst',
       options: {
-        cacheName: 'static-resources',
+        cacheName: 'next-static-js-assets',
         expiration: {
-          maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/static.+\.css$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'next-static-css-assets',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
         },
       },
     },
@@ -38,19 +60,7 @@ const withPWAConfig = withPWA({
       options: {
         cacheName: 'images',
         expiration: {
-          maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-      },
-    },
-    {
-      urlPattern: ({ request }) => request.destination === 'document',
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'pages',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 32,
+          maxEntries: 64,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
         },
       },
