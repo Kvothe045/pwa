@@ -5,7 +5,22 @@ const withPWAConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  dynamicStartUrl: false, // This ensures root URL is cached
+  fallbacks: {
+    document: '/_offline', // Fallback page for offline navigation
+  },
   runtimeCaching: [
+    {
+      urlPattern: /^https?:\/\/.*\/$/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'start-url',
+        expiration: {
+          maxEntries: 1,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
     {
       urlPattern: /^https?.*\.(js|css|woff|woff2|ttf|eot)$/,
       handler: 'CacheFirst',
@@ -29,22 +44,10 @@ const withPWAConfig = withPWA({
       },
     },
     {
-      urlPattern: /^https?:\/\/.*\/api\/.*/,
+      urlPattern: ({ request }) => request.destination === 'document',
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'api-cache',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-      },
-    },
-    {
-      urlPattern: /^https?:\/\/.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'others',
+        cacheName: 'pages',
         networkTimeoutSeconds: 10,
         expiration: {
           maxEntries: 32,
